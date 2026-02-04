@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- SEO 优化：提升品牌在搜索结果中的展现 -->
+    <title>九寶奇门 - 数字化时空运筹实战系统</title>
+    <meta name="description" content="九寶奇门数字化时空运筹系统，由九寶老师倾力打造。集全息寄宫、AI智能解盘、案例复盘于一体，助力时空决策与运筹。">
+    <meta name="keywords" content="九寶奇门,九寶文途,数字化时空运筹,奇门遁甲排盘,AI解盘,奇门实战">
+    <meta name="author" content="九寶老师">
+    
+    <!-- 外部核心库 -->
+    <script src="https://unpkg.com/lunar-javascript/lunar.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --gold: #d4af37; --red: #ff4444; --bg: #0a0a0a;
+            --card: #161616; --cyan: #00ffff; --green: #2ecc71;
+            --purple: #bf77f6; --god-color: #ff5722;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: #eee; font-family: "STKaiti", "Microsoft YaHei", serif; line-height: 1.6; }
+
+        /* 布局容器 */
+        #capture-area { background: var(--bg); padding-bottom: 30px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 15px; }
+
+        /* 页头 */
+        .brand-header { padding: 25px 0; text-align: center; background: radial-gradient(circle, #222 0%, #000 100%); border-bottom: 1px solid #333; }
+        .logo { font-size: 2.5em; color: var(--gold); font-weight: bold; letter-spacing: 15px; text-shadow: 0 0 20px rgba(212,175,55,0.4); margin-left: 15px; }
+
+        /* 顶部信息面板 - 竖排四柱样式 */
+        .info-panel {
+            background: var(--card); padding: 20px; border-bottom: 2px solid var(--gold);
+            display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 20px;
+        }
+
+        .pillars-wrapper { display: flex; align-items: center; gap: 20px; }
+        .lunar-date { 
+            writing-mode: vertical-rl; font-size: 1em; color: #aaa; 
+            border-right: 1px solid #444; padding-right: 12px; line-height: 1.4; letter-spacing: 2px;
+        }
+        .pillar-group { display: flex; gap: 15px; }
+        .pillar-item { display: flex; flex-direction: column; align-items: center; }
+        .pillar-label { font-size: 0.75em; color: #777; margin-bottom: 5px; }
+        .gz-box { 
+            display: flex; flex-direction: column; align-items: center; 
+            border: 1px solid var(--gold); padding: 6px 10px; border-radius: 6px; background: #000;
+            box-shadow: inset 0 0 10px rgba(212,175,55,0.2);
+        }
+        .gz-stem { font-size: 1.8em; color: var(--gold); font-weight: bold; line-height: 1; }
+        .gz-branch { font-size: 1.8em; color: var(--gold); font-weight: bold; line-height: 1; margin-top: 5px; }
+
+        .meta-info { display: flex; flex-direction: column; gap: 10px; font-size: 1em; }
+        .meta-row { display: flex; align-items: center; gap: 12px; border-left: 3px solid var(--gold); padding-left: 15px; }
+        .meta-label { color: #888; white-space: nowrap; }
+        .meta-value { color: #fff; font-weight: bold; font-size: 1.1em; }
+
+        /* 核心九宫格布局 */
+        .main-content { margin-top: 25px; display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        @media (max-width: 1000px) { .main-content { grid-template-columns: 1fr; } }
+
+        .qimen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: #2a2a2a; padding: 12px; border-radius: 12px; aspect-ratio: 1/1; }
+        .palace { background: var(--bg); border: 1px solid #333; position: relative; border-radius: 8px; overflow: hidden; transition: 0.3s; }
+        .palace:hover { border-color: var(--gold); }
+        
+        /* 宫位内元素排列 */
+        .p-god { position: absolute; top: 8px; left: 12px; color: var(--god-color); font-size: 1.7em; font-weight: bold; }
+        .p-star { position: absolute; top: 12px; right: 12px; color: var(--gold); font-size: 1.7em; font-weight: bold; }
+        .p-kong { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); color: var(--red); font-size: 2.5em; font-weight: bold; opacity: 0.5; pointer-events: none; }
+        
+        .p-stem-group { position: absolute; left: 12px; top: 52%; transform: translateY(-50%); display: flex; flex-direction: column; line-height: 0.9; }
+        .p-heaven { color: var(--cyan); font-size: 3em; font-weight: bold; text-shadow: 0 0 10px rgba(0,255,255,0.3); } 
+        .p-earth { color: #fff; font-size: 3em; font-weight: bold; } 
+        .ji-gan { font-size: 0.6em; opacity: 0.8; margin-bottom: 2px; } 
+
+        .p-door { position: absolute; bottom: 10px; right: 12px; color: var(--green); font-size: 2em; font-weight: bold; }
+        .p-horse { position: absolute; top: 55px; right: 10px; background: var(--red); color: white; font-size: 0.85em; font-weight: bold; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1.5px solid #fff; }
+
+        .center-palace { display: flex; justify-content: center; align-items: center; color: #444; font-size: 1.8em; font-weight: bold; }
+
+        /* AI 报告区 */
+        .ai-section { background: #111; border: 1px solid var(--gold); border-radius: 12px; padding: 25px; margin-top: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .ai-title { color: var(--gold); font-size: 1.5em; margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px; }
+        .ai-content { line-height: 1.8; color: #ddd; white-space: pre-wrap; font-size: 1.05em; border-top: 1px solid #333; padding-top: 15px; }
+
+        /* 侧边栏卡片与按钮 */
+        .side-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
+        .btn { 
+            background: linear-gradient(135deg, #ff4444, #cc0000); color: white; border: none; padding: 14px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 12px; font-size: 1.1em; transition: 0.3s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-ai { background: linear-gradient(135deg, #bf77f6, #8e44ad); box-shadow: 0 4px 0 #5e3370; }
+        .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn-gold { background: linear-gradient(135deg, #d4af37, #aa8a2e); color: #000; }
+        
+        input { background:#000; border:1px solid #444; color:var(--gold); padding:12px; border-radius:8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; font-size: 1em; }
+
+        /* 联系卡片 */
+        .contact-card { background: linear-gradient(145deg, #1a1a1a, #000); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
+        .contact-name { color: var(--gold); font-size: 1.4em; font-weight: bold; margin-bottom: 12px; display: block; letter-spacing: 3px; }
+        .wechat-id { background: #222; color: var(--cyan); padding: 8px 15px; border-radius: 6px; cursor: pointer; display: inline-block; border: 1px solid #444; margin-bottom: 12px; transition: 0.3s; }
+        .wechat-id:hover { background: #333; }
+        .official-box { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; }
+        .official-name { color: var(--green); border-bottom: 2px solid var(--green); cursor: pointer; }
+        .contact-tip { font-size: 0.8em; color: #666; line-height: 1.6; border-top: 1px solid #333; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="capture-area">
+    <div class="brand-header"><div class="logo">九寶奇门</div></div>
+    
+    <div class="container">
+        <!-- 顶部四柱面板 -->
+        <div class="info-panel">
+            <div class="pillars-wrapper">
+                <div class="lunar-date" id="lunar-date">农历日期...</div>
+                <div class="pillar-group">
+                    <div class="pillar-item"><span class="pillar-label">年柱</span><div class="gz-box"><span id="y-stem" class="gz-stem">-</span><span id="y-branch" class="gz-branch">-</span></div></div>
+                    <div class="pillar-item"><span class="pillar-label">月柱</span><div class="gz-box"><span id="m-stem" class="gz-stem">-</span><span id="m-branch" class="gz-branch">-</span></div></div>
+                    <div class="pillar-item"><span class="pillar-label">日柱</span><div class="gz-box"><span id="d-stem" class="gz-stem">-</span><span id="d-branch" class="gz-branch">-</span></div></div>
+                    <div class="pillar-item"><span class="pillar-label">时柱</span><div class="gz-box"><span id="t-stem" class="gz-stem">-</span><span id="t-branch" class="gz-branch">-</span></div></div>
+                </div>
+            </div>
+            <div class="meta-info">
+                <div class="meta-row"><span class="meta-label">时空局数</span><span id="ju-info" class="meta-value">-</span></div>
+                <div class="meta-row"><span class="meta-label">当日旬首</span><span id="xun-shou" class="meta-value">-</span></div>
+                <div class="meta-row"><span class="meta-label">符使空亡</span><span class="meta-value"><span id="zhi-fu" style="color:var(--gold)">-</span> / <span id="zhi-shi" style="color:var(--green)">-</span> / <span id="kong-show" style="color:var(--red)">-</span></span></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 盘面 -->
+            <div class="board-area">
+                <div class="qimen-grid" id="grid-box"></div>
+                <!-- AI报告 -->
+                <div id="ai-report" class="ai-section" style="display:none;">
+                    <h3 class="ai-title">✨ AI 数字化决策报告</h3>
+                    <div id="ai-content" class="ai-content"></div>
+                    <button class="btn btn-gold" style="width:auto; margin-top:20px; padding:10px 25px;" onclick="copyAIPrompt()">复制大师级 AI 提示词</button>
+                </div>
+            </div>
+
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="side-card">
+                    <button class="btn btn-ai" onclick="runAIDecoding()">一键 AI 智能解盘</button>
+                    <input type="datetime-local" id="input-time">
+                    <button class="btn" onclick="initQimen()">开启数字化起局</button>
+                    <button class="btn btn-green" onclick="saveAsImage()">保存高清复盘截图</button>
+                </div>
+                <div class="side-card">
+                    <h3 style="color:var(--gold); margin:0 0 15px 0; font-size:1.1em;">实战案例库</h3>
+                    <input type="text" id="case-name" placeholder="案例备注(如:某总测年运)">
+                    <button class="btn btn-gold" onclick="saveCase()">存档当前盘面</button>
+                    <div id="case-list" style="max-height:150px; overflow-y:auto; border-top:1px solid #333; margin-top:10px;"></div>
+                </div>
+                <!-- 联系九寶老师 -->
+                <div class="contact-card">
+                    <span class="contact-name">九寶老师</span>
+                    <div class="wechat-id" onclick="copyText('goldenbb', '微信')" title="点击复制微信">微信：goldenbb</div>
+                    <div class="official-box">公众号：<span class="official-name" onclick="copyText('九寶文途', '公众号')">九寶文途</span></div>
+                    <div class="contact-tip">
+                        传承奇门绝学 · 数字化时空运筹<br>
+                        © 2024 九寶奇门 版权所有
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 基础定义
+    const GAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+    const ZHI = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+    const QI_YI = ["戊", "己", "庚", "辛", "壬", "癸", "丁", "丙", "乙"];
+    const PALACE_CIRCLE = [1, 8, 3, 4, 9, 2, 7, 6]; 
+    const STARS = { 1:"天蓬", 8:"天任", 3:"天冲", 4:"天辅", 9:"天英", 2:"天芮", 7:"天柱", 6:"天心" };
+    const DOORS = { 1:"休门", 8:"生门", 3:"伤门", 4:"杜门", 9:"景门", 2:"死门", 7:"惊门", 6:"开门" };
+    const GODS = ["值符", "螣蛇", "太阴", "六合", "白虎", "玄武", "九地", "九天"];
+    const ZHI_PALACE = { 0:1, 1:8, 2:8, 3:3, 4:4, 5:4, 6:9, 7:2, 8:2, 9:7, 10:6, 11:6 };
+
+    let currentBoardData = {};
+
+    // 核心排盘引擎
+    function initQimen() {
+        const timeInput = document.getElementById('input-time').value;
+        const date = timeInput ? new Date(timeInput) : new Date();
+        const lunar = Solar.fromDate(date).getLunar();
+        
+        // 更新竖排四柱
+        const pillarStrs = [lunar.getYearInGanZhi(), lunar.getMonthInGanZhi(), lunar.getDayInGanZhi(), lunar.getTimeInGanZhi()];
+        const ids = ['y', 'm', 'd', 't'];
+        pillarStrs.forEach((p, i) => {
+            document.getElementById(ids[i]+'-stem').innerText = p[0];
+            document.getElementById(ids[i]+'-branch').innerText = p[1];
+        });
+        document.getElementById('lunar-date').innerText = `农历 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+
+        const hGan = lunar.getTimeGan(), hZhi = lunar.getTimeZhi();
+        const yearZhiIdx = ZHI.indexOf(lunar.getYearZhi()) + 1;
+        const hourZhiIdx = ZHI.indexOf(hZhi) + 1;
+        const juNum = (yearZhiIdx + lunar.getMonth() + lunar.getDay() + hourZhiIdx) % 9 || 9;
+        const isYang = "冬至,小寒,大寒,立春,雨水,惊蛰,春分,清明,谷雨,立夏,小满,芒种".includes(lunar.getJieQi());
+
+        let earthPlate = {};
+        for(let i=0; i<9; i++) {
+            let p = isYang ? (juNum + i - 1) % 9 + 1 : (juNum - i + 8) % 9 + 1;
+            earthPlate[p] = QI_YI[i];
+        }
+
+        const hGanIdx = GAN.indexOf(hGan), hZhiIdx = ZHI.indexOf(hZhi);
+        const xunShouIdx = (hZhiIdx - hGanIdx + 12) % 12;
+        const xunGan = { 0:"戊", 10:"己", 8:"庚", 6:"辛", 4:"壬", 2:"癸" }[xunShouIdx];
+
+        let zfOriPalace;
+        for(let p in earthPlate) if(earthPlate[p] === xunGan) zfOriPalace = parseInt(p);
+        
+        const zsName = DOORS[zfOriPalace === 5 ? 2 : zfOriPalace];
+        let targetPalace;
+        for(let p in earthPlate) if(earthPlate[p] === hGan) targetPalace = parseInt(p);
+        if(!targetPalace || hGan === "甲") targetPalace = zfOriPalace;
+
+        let hStarMap = {}, hGanMap = {}, hGodMap = {};
+        const startPos = PALACE_CIRCLE.indexOf(zfOriPalace === 5 ? 2 : zfOriPalace);
+        const targetPos = PALACE_CIRCLE.indexOf(targetPalace === 5 ? 2 : targetPalace);
+
+        for(let i=0; i<8; i++) {
+            let oldP = PALACE_CIRCLE[(startPos + i) % 8];
+            let newP = PALACE_CIRCLE[(targetPos + i) % 8];
+            hStarMap[newP] = STARS[oldP];
+            hGodMap[newP] = GODS[i];
+            hGanMap[newP] = (oldP === 2) ? earthPlate[2] + earthPlate[5] : earthPlate[oldP];
+        }
+
+        const kw1 = (xunShouIdx - 2 + 12) % 12, kw2 = (xunShouIdx - 1 + 12) % 12;
+        const kwPalaces = [ZHI_PALACE[kw1], ZHI_PALACE[kw2]];
+
+        currentBoardData = { earthPlate, hStarMap, hGanMap, hGodMap, pillars: pillarStrs.join(' '), ju: (isYang?"阳":"阴") + "遁 " + juNum + "局" };
+
+        renderGrid(earthPlate, hStarMap, hGanMap, hGodMap, hZhiIdx, kwPalaces);
+        
+        document.getElementById('ju-info').innerText = currentBoardData.ju;
+        document.getElementById('xun-shou').innerText = "甲" + ZHI[xunShouIdx] + xunGan;
+        document.getElementById('zhi-fu').innerText = STARS[zfOriPalace === 5 ? 2 : zfOriPalace];
+        document.getElementById('zhi-shi').innerText = zsName;
+        document.getElementById('kong-show').innerText = ZHI[kw1] + ZHI[kw2];
+        document.getElementById('ai-report').style.display = 'none';
+    }
+
+    function renderGrid(earth, hStar, hGan, hGod, hZhiIdx, kwPalaces) {
+        const gridBox = document.getElementById('grid-box');
+        gridBox.innerHTML = '';
+        const horseP = ([8,0,4].includes(hZhiIdx))?8:([2,6,10].includes(hZhiIdx))?2:([11,3,7].includes(hZhiIdx))?4:6;
+        const displayOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
+
+        displayOrder.forEach(p => {
+            if(p === 5) { gridBox.innerHTML += `<div class="palace center-palace">中五</div>`; return; }
+            const horseHtml = (p === horseP) ? `<div class="p-horse">马</div>` : '';
+            const kongHtml = (kwPalaces.includes(p)) ? `<div class="p-kong">⭕️</div>` : '';
+            const starName = hStar[p] === "天芮" ? "芮禽" : hStar[p];
+            const hGans = hGan[p] || "";
+            const heavenHtml = `<div style="display:flex; align-items:flex-end; gap:3px;"><div class="p-heaven">${hGans[0]}</div>` + (hGans.length > 1 ? `<div class="p-heaven ji-gan">${hGans[1]}</div>` : "") + `</div>`;
+            const earthHtml = `<div style="display:flex; align-items:flex-end; gap:3px;"><div class="p-earth">${earth[p]}</div>` + (p === 2 ? `<div class="p-earth ji-gan">${earth[5]}</div>` : "") + `</div>`;
+
+            gridBox.innerHTML += `
+                <div class="palace">
+                    ${horseHtml}${kongHtml}
+                    <div class="p-god">${hGod[p]}</div>
+                    <div class="p-star">${starName}</div>
+                    <div class="p-stem-group">${heavenHtml}${earthHtml}</div>
+                    <div class="p-door">${DOORS[p].charAt(0)}门</div>
+                </div>`;
+        });
+    }
+
+    // 交互逻辑
+    function runAIDecoding() {
+        const report = document.getElementById('ai-report');
+        const content = document.getElementById('ai-content');
+        report.style.display = 'block';
+        content.innerText = `[数字化运筹简报]\n当前时空锁定在 ${currentBoardData.pillars}。\n核心枢纽：符使落宫 ${document.getElementById('zhi-fu').innerText} / ${document.getElementById('zhi-shi').innerText}。\n运筹关键：关注旬空 ${document.getElementById('kong-show').innerText} 带来的能量缺位。由于系统目前为本地离线状态，深度解盘请点击下方按钮复制“大师级 AI 提示词”，发送给 DeepSeek 等深度学习模型。`;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function copyAIPrompt() {
+        let boardText = `[排盘数据]: 四柱 ${currentBoardData.pillars}, 局数 ${currentBoardData.ju}\n`;
+        PALACE_CIRCLE.forEach(p => boardText += `${p}宫[神:${currentBoardData.hGodMap[p]},星:${currentBoardData.hStarMap[p]},门:${DOORS[p]},天${currentBoardData.hGanMap[p]},地${currentBoardData.earthPlate[p]}] `);
+        const prompt = `你是一位精通阴盘奇门的时空运筹大师。请结合值符[${document.getElementById('zhi-fu').innerText}]和值使[${document.getElementById('zhi-shi').innerText}]，对以下盘面进行深度解盘，并从“数字化时空运筹”的角度给出三条核心策略建议：\n${boardText}`;
+        navigator.clipboard.writeText(prompt).then(() => alert("大师级 AI 提示词已成功复制！"));
+    }
+
+    function copyText(val, label) {
+        navigator.clipboard.writeText(val).then(() => alert(`${label} [${val}] 已一键复制，请在微信中添加。`));
+    }
+
+    function saveCase() {
+        const name = document.getElementById('case-name').value || "未命名复盘";
+        const time = document.getElementById('input-time').value;
+        let cases = JSON.parse(localStorage.getItem('qimen_cases') || '[]');
+        cases.unshift({ name, time, pillars: currentBoardData.pillars });
+        localStorage.setItem('qimen_cases', JSON.stringify(cases));
+        loadCaseList();
+        document.getElementById('case-name').value = '';
+    }
+
+    function loadCaseList() {
+        const listDiv = document.getElementById('case-list');
+        const cases = JSON.parse(localStorage.getItem('qimen_cases') || '[]');
+        listDiv.innerHTML = cases.slice(0, 5).map(c => `
+            <div style="background:#000; padding:8px; margin-top:8px; font-size:0.85em; border:1px solid #333; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                <div><span style="color:var(--gold)">${c.name}</span><br><span style="color:#555; font-size:0.8em;">${c.pillars}</span></div>
+                <button onclick="viewCase('${c.time}')" style="background:var(--gold); border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">载入</button>
+            </div>
+        `).join('');
+    }
+
+    function viewCase(t) { document.getElementById('input-time').value = t; initQimen(); window.scrollTo({top:0, behavior:'smooth'}); }
+
+    function saveAsImage() {
+        const area = document.getElementById('capture-area');
+        html2canvas(area, { backgroundColor: '#0a0a0a', scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `九寶奇门-数字化运筹复盘-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+
+    window.onload = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('input-time').value = now.toISOString().slice(0, 16);
+        initQimen();
+        loadCaseList();
+    };
+</script>
+</body>
+</html>
